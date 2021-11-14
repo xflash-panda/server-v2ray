@@ -1,1 +1,1 @@
-# server-v2ray
+# server-vmess
