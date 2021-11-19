@@ -2,8 +2,8 @@
 > 服务端版本请使用 [xflash-panda/v2board](https://github.com/xflash-panda/v2board), 不要使用原版
 
 ## 主要特性
-- 永久免费,并且开源
-- 专属服务端，只支持xflah-panda/v2board面板
+- 永久免费,并且完整开源
+- 专属服务端，只支持xflash-panda/v2board面板
 - 无需配置文件,和面板完美集成
 - 更好的性能，减少无效数据传输
 - 更简单的实现方式
@@ -19,6 +19,9 @@ go build -o server-trojan -ldflags "-s -w"
 chmod +x server-vmess
 ./server-vmess --api xxx --token xxx --node xxx
 ```
+**一键安装**
+* [server-vmess-install](https://github.com/xflash-panda/server-vmess-install)
+
 ##  Thanks
 * [Project X](https://github.com/XTLS/)
 * [XrayR](https://github.com/XrayR-project/XrayR)
