@@ -18,7 +18,7 @@ import (
 
 const (
 	Name          = "vmess-node"
-	Version       = "0.1.0"
+	Version       = "0.1.1"
 	CopyRight     = "XFLASH-PANDA@2021"
 	LogLevelDebug = "debug"
 	LogLevelError = "error"
