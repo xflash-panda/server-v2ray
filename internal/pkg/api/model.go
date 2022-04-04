@@ -46,7 +46,7 @@ type UserInfo struct {
 }
 
 type RepUserList struct {
-	Data    []*UserInfo `json:"data"`
+	Data    *[]UserInfo `json:"data"`
 	Message string      `json:"message"`
 }
 
