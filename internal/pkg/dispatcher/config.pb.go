@@ -91,8 +91,8 @@ func (m *Config) GetSettings() *SessionConfig {
 }
 
 func init() {
-	proto.RegisterType((*SessionConfig)(nil), "xflash.server.trojan.app.dispatcher.SessionConfig")
-	proto.RegisterType((*Config)(nil), "xflash.server.trojan.app.dispatcher.Config")
+	proto.RegisterType((*SessionConfig)(nil), "xflash.server.vmess.app.dispatcher.SessionConfig")
+	proto.RegisterType((*Config)(nil), "xflash.server.vmess.app.dispatcher.Config")
 }
 
 func init() { proto.RegisterFile("config.proto", fileDescriptor_3eaf2c85e69e9ea4) }
