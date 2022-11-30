@@ -18,7 +18,7 @@ import (
 
 const (
 	Name          = "vmess-node"
-	Version       = "0.1.6"
+	Version       = "0.1.7"
 	CopyRight     = "XFLASH-PANDA@2021"
 	LogLevelDebug = "debug"
 	LogLevelError = "error"
@@ -48,7 +48,7 @@ func main() {
 		Name:      Name,
 		Version:   Version,
 		Copyright: CopyRight,
-		Usage:     "Provide trojan service for the v2Board(XFLASH-PANDA)",
+		Usage:     "Provide vmess service for the v2Board(XFLASH-PANDA)",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "api",

@@ -15,7 +15,7 @@
 ```
 git clone https://github.com/xflash-panda/server-vmess.git
 cd server-vmess/cmd/server
-go build -o server-trojan -ldflags "-s -w"
+go build -o server-vmess  -ldflags "-s -w"
 chmod +x server-vmess
 ./server-vmess --api xxx --token xxx --node xxx
 ```
