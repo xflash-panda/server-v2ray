@@ -30,6 +30,7 @@ type NodeInfo struct {
 	Network         string                `json:"network"`
 	TlsConfig       *conf.TLSConfig       `json:"tls_settings"`
 	WebSocketConfig *conf.WebSocketConfig `json:"ws_settings,omitempty"`
+	H2Config        *conf.HTTPConfig      `json:"h2_config"`
 	TcpConfig       *conf.TCPConfig       `json:"tcp_settings,omitempty"`
 	GrpcConfig      *conf.GRPCConfig      `json:"grpc_settings,omitempty"`
 	RouterSettings  *conf.RouterConfig    `json:"router_settings,omitempty"`

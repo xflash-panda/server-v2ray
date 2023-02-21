@@ -66,6 +66,12 @@ func InboundBuilder(config *Config, nodeInfo *api.NodeInfo) (*core.InboundHandle
 		} else {
 			streamSetting.GRPCConfig = &conf.GRPCConfig{}
 		}
+	} else if networkType == H2 {
+		if nodeInfo.H2Config != nil {
+			streamSetting.HTTPSettings = nodeInfo.H2Config
+		} else {
+			streamSetting.HTTPSettings = &conf.HTTPConfig{}
+		}
 	}
 
 	streamSetting.Network = &transportProtocol

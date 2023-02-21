@@ -6,6 +6,7 @@ const (
 	TCP      = "tcp"
 	WS       = "ws"
 	GRPC     = "grpc"
+	H2       = "h2"
 )
 
 // Service is the interface of all the services running in the panel
