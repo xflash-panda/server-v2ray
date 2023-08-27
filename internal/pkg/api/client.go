@@ -77,7 +77,11 @@ func (c *Client) GetNodeInfo() (nodeInfo *NodeInfo, err error) {
 	var path = "/api/v1/server/vmess/config"
 	res, err := c.client.R().
 		ForceContentType("application/json").
-		SetQueryParam("node_id", strconv.Itoa(c.config.NodeID)).
+		SetQueryParams(
+			map[string]string{
+				"node_id": strconv.Itoa(c.config.NodeID),
+				"random":  strconv.FormatInt(time.Now().Unix(), 10),
+			}).
 		Get(path)
 
 	if err != nil {
@@ -105,7 +109,11 @@ func (c *Client) GetNodeInfo() (nodeInfo *NodeInfo, err error) {
 func (c *Client) GetUserList() (UserList *[]UserInfo, err error) {
 	var path = "/api/v1/server/vmess/users"
 	res, err := c.client.R().
-		SetQueryParam("node_id", strconv.Itoa(c.config.NodeID)).
+		SetQueryParams(
+			map[string]string{
+				"node_id": strconv.Itoa(c.config.NodeID),
+				"random":  strconv.FormatInt(time.Now().Unix(), 10),
+			}).
 		ForceContentType("application/json").
 		Get(path)
 
