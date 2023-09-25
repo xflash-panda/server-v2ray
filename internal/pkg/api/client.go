@@ -45,6 +45,7 @@ func New(apiConfig *Config) *Client {
 		"node_id": strconv.Itoa(apiConfig.NodeID),
 		"token":   apiConfig.Token,
 	})
+	client.SetCloseConnection(true)
 
 	apiClient := &Client{
 		client: client,
