@@ -46,7 +46,7 @@ func New(inboundTag string, instance *core.Instance, config *Config, nodeInfo *a
 	return builder
 }
 
-//addUsers
+// addUsers
 func (b *Builder) addUsers(users []*cProtocol.User, tag string) error {
 	inboundManager := b.instance.GetFeature(inbound.ManagerType()).(inbound.Manager)
 	handler, err := inboundManager.GetHandler(context.Background(), tag)
@@ -78,7 +78,7 @@ func (b *Builder) addUsers(users []*cProtocol.User, tag string) error {
 // addNewUser
 func (b *Builder) addNewUser(userInfo []api.UserInfo) (err error) {
 	users := make([]*cProtocol.User, 0)
-	users = buildUser(b.inboundTag, userInfo, b.nodeInfo.AlterID)
+	users = buildUser(b.inboundTag, userInfo)
 	err = b.addUsers(users, b.inboundTag)
 	if err != nil {
 		return err
@@ -143,7 +143,7 @@ func (b *Builder) Close() error {
 	return nil
 }
 
-//getTraffic
+// getTraffic
 func (b *Builder) getTraffic(email string) (up int64, down int64, count int64) {
 	upName := "user>>>" + email + ">>>traffic>>>uplink"
 	downName := "user>>>" + email + ">>>traffic>>>downlink"
@@ -169,7 +169,7 @@ func (b *Builder) getTraffic(email string) (up int64, down int64, count int64) {
 
 }
 
-//removeUsers
+// removeUsers
 func (b *Builder) removeUsers(users []string, tag string) error {
 	inboundManager := b.instance.GetFeature(inbound.ManagerType()).(inbound.Manager)
 	handler, err := inboundManager.GetHandler(context.Background(), tag)
@@ -194,7 +194,7 @@ func (b *Builder) removeUsers(users []string, tag string) error {
 	return nil
 }
 
-//nodeInfoMonitor
+// nodeInfoMonitor
 func (b *Builder) nodeInfoMonitor() (err error) {
 	// Update User
 	newUserList, err := b.getUserList()
@@ -229,7 +229,7 @@ func (b *Builder) nodeInfoMonitor() (err error) {
 	return nil
 }
 
-//userInfoMonitor
+// userInfoMonitor
 func (b *Builder) userInfoMonitor() (err error) {
 	// Get User traffic
 	userTraffic := make([]*api.UserTraffic, 0)
@@ -257,7 +257,7 @@ func (b *Builder) userInfoMonitor() (err error) {
 	return nil
 }
 
-//compareUserList
+// compareUserList
 func compareUserList(old, new *[]api.UserInfo) (deleted, added []api.UserInfo) {
 	msrc := make(map[api.UserInfo]byte) //按源数组建索引
 	mall := make(map[api.UserInfo]byte) //源+目所有元素建索引

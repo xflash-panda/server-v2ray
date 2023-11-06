@@ -8,12 +8,12 @@ import (
 	"github.com/xtls/xray-core/infra/conf"
 )
 
-func buildUser(tag string, userInfo []api.UserInfo, serverAlterID int) (users []*cProtocol.User) {
+func buildUser(tag string, userInfo []api.UserInfo) (users []*cProtocol.User) {
 	users = make([]*cProtocol.User, len(userInfo))
 	for i, user := range userInfo {
 		vMessAccount := &conf.VMessAccount{
 			ID:       user.UUID,
-			AlterIds: uint16(serverAlterID),
+			AlterIds: 0,
 			Security: "auto",
 		}
 		users[i] = &cProtocol.User{

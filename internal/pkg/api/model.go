@@ -25,7 +25,6 @@ type RepUserTraffic struct {
 type NodeInfo struct {
 	ID              int                   `json:"id"`
 	ServerPort      int                   `json:"server_port"`
-	AlterID         int                   `json:"alter_id"`
 	TLS             int                   `json:"tls"`
 	Network         string                `json:"network"`
 	TlsConfig       *conf.TLSConfig       `json:"tls_settings"`
