@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/xflash-panda/server-vmess/internal/pkg/api"
+	api "github.com/xflash-panda/server-client/pkg"
 	cProtocol "github.com/xtls/xray-core/common/protocol"
 	"github.com/xtls/xray-core/common/task"
 	"github.com/xtls/xray-core/core"
@@ -17,23 +17,24 @@ import (
 type Config struct {
 	SysInterval time.Duration
 	Cert        *CertConfig
+	NodeID      int
 }
 
 type Builder struct {
 	instance                *core.Instance
 	config                  *Config
-	nodeInfo                *api.NodeInfo
+	nodeInfo                *api.VMessConfig
 	inboundTag              string
-	userList                *[]api.UserInfo
-	getUserList             func() (*[]api.UserInfo, error)
-	reportUserTraffic       func([]*api.UserTraffic) error
+	userList                *[]api.User
+	getUserList             func(api.NodeId, api.NodeType) (*[]api.User, error)
+	reportUserTraffic       func(api.NodeId, api.NodeType, []*api.UserTraffic) error
 	nodeInfoMonitorPeriodic *task.Periodic
 	userReportPeriodic      *task.Periodic
 }
 
 // New return a builder service with default parameters.
-func New(inboundTag string, instance *core.Instance, config *Config, nodeInfo *api.NodeInfo,
-	getUserList func() (*[]api.UserInfo, error), reportUserTraffic func([]*api.UserTraffic) error,
+func New(inboundTag string, instance *core.Instance, config *Config, nodeInfo *api.VMessConfig,
+	getUserList func(api.NodeId, api.NodeType) (*[]api.User, error), reportUserTraffic func(api.NodeId, api.NodeType, []*api.UserTraffic) error,
 ) *Builder {
 	builder := &Builder{
 		inboundTag:        inboundTag,
@@ -76,7 +77,7 @@ func (b *Builder) addUsers(users []*cProtocol.User, tag string) error {
 }
 
 // addNewUser
-func (b *Builder) addNewUser(userInfo []api.UserInfo) (err error) {
+func (b *Builder) addNewUser(userInfo []api.User) (err error) {
 	users := make([]*cProtocol.User, 0)
 	users = buildUser(b.inboundTag, userInfo)
 	err = b.addUsers(users, b.inboundTag)
@@ -92,7 +93,7 @@ func (b *Builder) Start() error {
 	log.Debugf("nodeinfo: %+v", b.nodeInfo)
 
 	// Update user
-	userList, err := b.getUserList()
+	userList, err := b.getUserList(api.NodeId(b.config.NodeID), api.VMess)
 	if err != nil {
 		return err
 	}
@@ -197,7 +198,7 @@ func (b *Builder) removeUsers(users []string, tag string) error {
 // nodeInfoMonitor
 func (b *Builder) nodeInfoMonitor() (err error) {
 	// Update User
-	newUserList, err := b.getUserList()
+	newUserList, err := b.getUserList(api.NodeId(b.config.NodeID), api.VMess)
 	if err != nil {
 		log.Errorln(err)
 		return nil
@@ -239,15 +240,15 @@ func (b *Builder) userInfoMonitor() (err error) {
 		if up > 0 || down > 0 || count > 0 {
 			userTraffic = append(userTraffic, &api.UserTraffic{
 				UID:      user.ID,
-				Upload:   up,
-				Download: down,
-				Count:    count,
+				Upload:   uint64(up),
+				Download: uint64(down),
+				Count:    uint64(count),
 			})
 		}
 	}
 	log.Infof("%d user traffic needs to be reported", len(userTraffic))
 	if len(userTraffic) > 0 {
-		err = b.reportUserTraffic(userTraffic)
+		err = b.reportUserTraffic(api.NodeId(b.config.NodeID), api.VMess, userTraffic)
 		if err != nil {
 			log.Errorln(err)
 			return nil
@@ -258,11 +259,11 @@ func (b *Builder) userInfoMonitor() (err error) {
 }
 
 // compareUserList
-func compareUserList(old, new *[]api.UserInfo) (deleted, added []api.UserInfo) {
-	msrc := make(map[api.UserInfo]byte) //按源数组建索引
-	mall := make(map[api.UserInfo]byte) //源+目所有元素建索引
+func compareUserList(old, new *[]api.User) (deleted, added []api.User) {
+	msrc := make(map[api.User]byte) //按源数组建索引
+	mall := make(map[api.User]byte) //源+目所有元素建索引
 
-	var set []api.UserInfo //交集
+	var set []api.User //交集
 
 	//1.源数组建立map
 	for _, v := range *old {

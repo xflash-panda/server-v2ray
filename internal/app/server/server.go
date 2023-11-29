@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/xflash-panda/server-vmess/internal/pkg/api"
+	api "github.com/xflash-panda/server-client/pkg"
 	_ "github.com/xflash-panda/server-vmess/internal/pkg/dep"
 	"github.com/xflash-panda/server-vmess/internal/pkg/dispatcher"
 	"github.com/xflash-panda/server-vmess/internal/pkg/service"
@@ -15,6 +15,7 @@ import (
 	"github.com/xtls/xray-core/core"
 	"github.com/xtls/xray-core/infra/conf"
 	"sync"
+	"unsafe"
 )
 
 type Config struct {
@@ -40,24 +41,25 @@ func (s *Server) Start() {
 	defer s.access.Unlock()
 	log.Infoln("server Start")
 	apiClient := api.New(s.apiConfig)
-	nodeInfo, err := apiClient.GetNodeInfo()
+	nodeInfo, err := apiClient.Config(api.NodeId(s.serviceConfig.NodeID), api.VMess)
 	if err != nil {
 		panic(fmt.Errorf("failed to get node inf :%s", err))
 	}
 
-	pbInBoundConfig, err := service.InboundBuilder(s.serviceConfig, nodeInfo)
+	vmessConfig := nodeInfo.(*api.VMessConfig)
+	pbInBoundConfig, err := service.InboundBuilder(s.serviceConfig, vmessConfig)
 	if err != nil {
 		panic(fmt.Errorf("failed to build inbound config: %s", err))
 	}
 
-	pbOutBoundConfig, err := service.OutboundBuilder(nodeInfo)
+	pbOutBoundConfig, err := service.OutboundBuilder(vmessConfig)
 	if err != nil {
 		panic(fmt.Errorf("failed to build outbound config: %s", err))
 	}
 
 	var pbRouterConfig *router.Config
-	if nodeInfo.RouterSettings != nil {
-		pbRouterConfig, err = nodeInfo.RouterSettings.Build()
+	if vmessConfig.RouterSettings != nil {
+		pbRouterConfig, err = (*conf.RouterConfig)(unsafe.Pointer(vmessConfig.RouterSettings)).Build()
 		if err != nil {
 			panic(fmt.Errorf("failed to build router config:%s", err))
 		}
@@ -67,8 +69,8 @@ func (s *Server) Start() {
 	}
 
 	var pbDnsConfig *dns.Config
-	if nodeInfo.DnsSettings != nil {
-		pbDnsConfig, err = nodeInfo.DnsSettings.Build()
+	if vmessConfig.DnsSettings != nil {
+		pbDnsConfig, err = (*conf.DNSConfig)(unsafe.Pointer(vmessConfig.DnsSettings)).Build()
 		if err != nil {
 			panic(fmt.Errorf("failed to build dns condig:%s", err))
 		}
@@ -86,8 +88,8 @@ func (s *Server) Start() {
 		panic(fmt.Errorf("failed to start instance: %s", err))
 	}
 
-	buildService := service.New(pbInBoundConfig.Tag, instance, s.serviceConfig, nodeInfo,
-		apiClient.GetUserList, apiClient.ReportUserTraffic)
+	buildService := service.New(pbInBoundConfig.Tag, instance, s.serviceConfig, vmessConfig,
+		apiClient.Users, apiClient.Submit)
 	s.service = buildService
 	if err := s.service.Start(); err != nil {
 		panic(fmt.Errorf("failed to start build service: %s", err))

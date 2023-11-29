@@ -1,16 +1,17 @@
-//Package generate the InbounderConfig used by add inbound
+// Package generate the InbounderConfig used by add inbound
 package service
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/xflash-panda/server-vmess/internal/pkg/api"
+	api "github.com/xflash-panda/server-client/pkg"
 	"github.com/xtls/xray-core/core"
 	"github.com/xtls/xray-core/infra/conf"
+	"unsafe"
 )
 
-//InboundBuilder build Inbound config for different protocol
-func InboundBuilder(config *Config, nodeInfo *api.NodeInfo) (*core.InboundHandlerConfig, error) {
+// InboundBuilder build Inbound config for different protocol
+func InboundBuilder(config *Config, nodeInfo *api.VMessConfig) (*core.InboundHandlerConfig, error) {
 	inboundDetourConfig := &conf.InboundDetourConfig{}
 
 	// Build Port
@@ -50,25 +51,25 @@ func InboundBuilder(config *Config, nodeInfo *api.NodeInfo) (*core.InboundHandle
 	}
 	if networkType == TCP {
 		if nodeInfo.TcpConfig != nil {
-			streamSetting.TCPSettings = nodeInfo.TcpConfig
+			streamSetting.TCPSettings = (*conf.TCPConfig)(nodeInfo.TcpConfig)
 		} else {
 			streamSetting.TCPSettings = &conf.TCPConfig{}
 		}
 	} else if networkType == WS {
 		if nodeInfo.WebSocketConfig != nil {
-			streamSetting.WSSettings = nodeInfo.WebSocketConfig
+			streamSetting.WSSettings = (*conf.WebSocketConfig)(nodeInfo.WebSocketConfig)
 		} else {
 			streamSetting.WSSettings = &conf.WebSocketConfig{}
 		}
 	} else if networkType == GRPC {
 		if nodeInfo.GrpcConfig != nil {
-			streamSetting.GRPCConfig = nodeInfo.GrpcConfig
+			streamSetting.GRPCConfig = (*conf.GRPCConfig)(nodeInfo.GrpcConfig)
 		} else {
 			streamSetting.GRPCConfig = &conf.GRPCConfig{}
 		}
 	} else if networkType == H2 {
 		if nodeInfo.H2Config != nil {
-			streamSetting.HTTPSettings = nodeInfo.H2Config
+			streamSetting.HTTPSettings = (*conf.HTTPConfig)(unsafe.Pointer(nodeInfo.H2Config))
 		} else {
 			streamSetting.HTTPSettings = &conf.HTTPConfig{}
 		}
@@ -87,7 +88,7 @@ func InboundBuilder(config *Config, nodeInfo *api.NodeInfo) (*core.InboundHandle
 		if nodeInfo.TlsConfig == nil {
 			tlsSettings = &conf.TLSConfig{}
 		} else {
-			tlsSettings = nodeInfo.TlsConfig
+			tlsSettings = (*conf.TLSConfig)(unsafe.Pointer(nodeInfo.TlsConfig))
 		}
 
 		tlsSettings.Certs = append(tlsSettings.Certs, &conf.TLSCertConfig{CertFile: certFile, KeyFile: keyFile, OcspStapling: 3600})
@@ -100,7 +101,7 @@ func InboundBuilder(config *Config, nodeInfo *api.NodeInfo) (*core.InboundHandle
 	return inboundDetourConfig.Build()
 }
 
-//getCertFile
+// getCertFile
 func getCertFile(certConfig *CertConfig) (certFile string, keyFile string, err error) {
 	if certConfig.CertFile == "" || certConfig.KeyFile == "" {
 		return "", "", fmt.Errorf("cert file path or key file path not exist")
