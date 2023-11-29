@@ -1,6 +1,6 @@
 module github.com/xflash-panda/server-vmess
 
-go 1.21
+go 1.21.4
 
 require (
 	github.com/sirupsen/logrus v1.9.3
