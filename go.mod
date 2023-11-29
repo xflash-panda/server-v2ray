@@ -1,9 +1,8 @@
 module github.com/xflash-panda/server-vmess
 
-go 1.21.4
+go 1.21
 
 require (
-	github.com/go-resty/resty/v2 v2.10.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/xflash-panda/server-client v0.0.6
@@ -19,6 +18,7 @@ require (
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/gaukas/godicttls v0.0.4 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20220118164431-d8423dcdf344 // indirect
+	github.com/go-resty/resty/v2 v2.10.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/btree v1.1.2 // indirect
