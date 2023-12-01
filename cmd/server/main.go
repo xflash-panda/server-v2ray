@@ -18,7 +18,7 @@ import (
 
 const (
 	Name          = "vmess-node"
-	Version       = "0.1.15"
+	Version       = "0.1.16"
 	CopyRight     = "XFLASH-PANDA@2021"
 	LogLevelDebug = "debug"
 	LogLevelError = "error"
@@ -91,13 +91,22 @@ func main() {
 				Destination: &serviceConfig.NodeID,
 			},
 			&cli.DurationFlag{
-				Name:        "sys_interval",
-				Usage:       "API request cycle, unit: second",
-				EnvVars:     []string{"X_PANDA_VMESS_SYS_INTERVAL", "SYS_INTERVAL"},
+				Name:        "fetch_users_interval, fui",
+				Usage:       "API request cycle(fetch users), unit: second",
+				EnvVars:     []string{"X_PANDA_SS_FETCH_USER_INTERVAL", "FETCH_USER_INTERVAL"},
 				Value:       time.Second * 60,
 				DefaultText: "60",
 				Required:    false,
-				Destination: &serviceConfig.SysInterval,
+				Destination: &serviceConfig.FetchUsersInterval,
+			},
+			&cli.DurationFlag{
+				Name:        "report_traffics_interval, fui",
+				Usage:       "API request cycle(report traffics), unit: second",
+				EnvVars:     []string{"X_PANDA_SS_FETCH_USER_INTERVAL", "REPORT_TRAFFICS_INTERVAL"},
+				Value:       time.Second * 80,
+				DefaultText: "80",
+				Required:    false,
+				Destination: &serviceConfig.ReportTrafficsInterval,
 			},
 			&cli.StringFlag{
 				Name:        "log_mode",
