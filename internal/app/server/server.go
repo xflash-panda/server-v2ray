@@ -1,8 +1,10 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/xflash-panda/server-agent-proto/pkg"
 	api "github.com/xflash-panda/server-client/pkg"
 	_ "github.com/xflash-panda/server-vmess/internal/pkg/dep"
 	"github.com/xflash-panda/server-vmess/internal/pkg/dispatcher"
@@ -15,11 +17,14 @@ import (
 	"github.com/xtls/xray-core/core"
 	"github.com/xtls/xray-core/infra/conf"
 	"sync"
+	"time"
 	"unsafe"
 )
 
 type Config struct {
-	LogLevel string
+	LogLevel  string
+	AgentHost string
+	AgentPort int
 }
 
 type Server struct {
@@ -32,21 +37,26 @@ type Server struct {
 	Running       bool
 }
 
-func New(config *Config, apiConfig *api.Config, serviceConfig *service.Config) *Server {
-	return &Server{config: config, apiConfig: apiConfig, serviceConfig: serviceConfig}
+func New(config *Config, serviceConfig *service.Config) *Server {
+	return &Server{config: config, serviceConfig: serviceConfig}
 }
 
-func (s *Server) Start() {
+func (s *Server) Start(agentClient pb.AgentClient) {
 	s.access.Lock()
 	defer s.access.Unlock()
 	log.Infoln("server Start")
-	apiClient := api.New(s.apiConfig)
-	nodeInfo, err := apiClient.Config(api.NodeId(s.serviceConfig.NodeID), api.VMess)
+	ctx, cancel := context.WithTimeout(context.Background(), service.DefaultTimeout)
+	defer cancel()
+
+	r, err := agentClient.Config(ctx, &pb.ConfigRequest{Params: &pb.CommonParams{NodeId: int32(s.serviceConfig.NodeID), NodeType: pb.NodeType_VMESS}})
 	if err != nil {
-		panic(fmt.Errorf("failed to get node inf :%s", err))
+		panic(fmt.Errorf("get config eror: %v", err))
 	}
 
-	vmessConfig := nodeInfo.(*api.VMessConfig)
+	vmessConfig, err := api.UnmarshalVMessConfig(r.GetRawData())
+	if err != nil {
+		panic(err)
+	}
 	pbInBoundConfig, err := service.InboundBuilder(s.serviceConfig, vmessConfig)
 	if err != nil {
 		panic(fmt.Errorf("failed to build inbound config: %s", err))
@@ -88,14 +98,18 @@ func (s *Server) Start() {
 		panic(fmt.Errorf("failed to start instance: %s", err))
 	}
 
-	buildService := service.New(pbInBoundConfig.Tag, instance, s.serviceConfig, vmessConfig,
-		apiClient.Users, apiClient.Submit)
+	buildService := service.New(pbInBoundConfig.Tag, instance, s.serviceConfig, vmessConfig, agentClient)
 	s.service = buildService
 	if err := s.service.Start(); err != nil {
 		panic(fmt.Errorf("failed to start build service: %s", err))
 	}
 	s.Running = true
 	log.Infoln("server is running")
+	log.Infoln("server is running")
+	time.Sleep(1 * time.Minute)
+	if err := s.service.StartMonitor(); err != nil {
+		panic(fmt.Errorf("failed to start service monitor: %s", err))
+	}
 }
 
 func (s *Server) loadCore(pbInboundConfig *core.InboundHandlerConfig, pbOutboundConfig *core.OutboundHandlerConfig,

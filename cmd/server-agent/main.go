@@ -4,11 +4,14 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	api "github.com/xflash-panda/server-client/pkg"
+	pb "github.com/xflash-panda/server-agent-proto/pkg"
 	"github.com/xflash-panda/server-vmess/internal/app/server"
 	"github.com/xflash-panda/server-vmess/internal/pkg/service"
 	"github.com/xtls/xray-core/core"
-	"io/ioutil"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
+	"io"
 	"os"
 	"os/signal"
 	"runtime"
@@ -17,8 +20,8 @@ import (
 )
 
 const (
-	Name          = "vmess-node"
-	Version       = "0.1.16"
+	Name          = "vmess-agent-node"
+	Version       = "0.0.1"
 	CopyRight     = "XFLASH-PANDA@2021"
 	LogLevelDebug = "debug"
 	LogLevelError = "error"
@@ -31,16 +34,15 @@ func init() {
 		Aliases: []string{"V"},
 		Usage:   "print only the version",
 	}
-	cli.ErrWriter = ioutil.Discard
+	cli.ErrWriter = io.Discard
 
 	cli.VersionPrinter = func(c *cli.Context) {
-		fmt.Printf("version=%s xray.version=%s\n", Version, core.Version())
+		fmt.Printf("vmess-agent-node version=%s xray.version=%s\n", Version, core.Version())
 	}
 }
 
 func main() {
 	var config server.Config
-	var apiConfig api.Config
 	var serviceConfig service.Config
 	var certConfig service.CertConfig
 
@@ -48,23 +50,22 @@ func main() {
 		Name:      Name,
 		Version:   Version,
 		Copyright: CopyRight,
-		Usage:     "Provide vmess service for the v2Board(XFLASH-PANDA)",
+		Usage:     "Provide vmess service for the v2Board",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "api",
-				Usage:       "Server address",
-				EnvVars:     []string{"X_PANDA_VMESS_API", "API"},
-				Required:    true,
-				Destination: &apiConfig.APIHost,
+				Name:        "server_host, sh",
+				Value:       "127.0.0.1",
+				Usage:       "server host(agent)",
+				EnvVars:     []string{"X_PANDA_SS_SERVER_AGENT_HOST", "SERVER_HOST"},
+				Destination: &config.AgentHost,
 			},
-			&cli.StringFlag{
-				Name:        "token",
-				Usage:       "Token of server API",
-				EnvVars:     []string{"X_PANDA_VMESS_TOKEN", "TOKEN"},
-				Required:    true,
-				Destination: &apiConfig.Token,
+			&cli.IntFlag{
+				Name:        "port, p",
+				Value:       8082,
+				Usage:       "server port(agent)",
+				EnvVars:     []string{"X_PANDA_SS_SERVER_AGENT_HOST", "SERVER_PORT"},
+				Destination: &config.AgentPort,
 			},
-
 			&cli.StringFlag{
 				Name:        "cert_file",
 				Usage:       "Cert file",
@@ -93,7 +94,7 @@ func main() {
 			&cli.DurationFlag{
 				Name:        "fetch_users_interval, fui",
 				Usage:       "API request cycle(fetch users), unit: second",
-				EnvVars:     []string{"X_PANDA_SS_FETCH_USER_INTERVAL", "FETCH_USER_INTERVAL"},
+				EnvVars:     []string{"X_PANDA_VMESS_FETCH_USER_INTERVAL", "FETCH_USER_INTERVAL"},
 				Value:       time.Second * 60,
 				DefaultText: "60",
 				Required:    false,
@@ -102,11 +103,20 @@ func main() {
 			&cli.DurationFlag{
 				Name:        "report_traffics_interval, fui",
 				Usage:       "API request cycle(report traffics), unit: second",
-				EnvVars:     []string{"X_PANDA_SS_FETCH_USER_INTERVAL", "REPORT_TRAFFICS_INTERVAL"},
+				EnvVars:     []string{"X_PANDA_VMESS_FETCH_USER_INTERVAL", "REPORT_TRAFFICS_INTERVAL"},
 				Value:       time.Second * 80,
 				DefaultText: "80",
 				Required:    false,
 				Destination: &serviceConfig.ReportTrafficsInterval,
+			},
+			&cli.DurationFlag{
+				Name:        "heartbeat_interval",
+				Usage:       "API request cycle(heartbeat), unit: second",
+				EnvVars:     []string{"X_PANDA_VMESS_HEARTBEAT_INTERVAL", "HEARTTBEAT_INTERVAL"},
+				Value:       time.Second * 60,
+				DefaultText: "60 seconds",
+				Required:    false,
+				Destination: &serviceConfig.HeartBeatInterval,
 			},
 			&cli.StringFlag{
 				Name:        "log_mode",
@@ -143,8 +153,20 @@ func main() {
 				}()
 			}
 			serviceConfig.Cert = &certConfig
-			serv := server.New(&config, &apiConfig, &serviceConfig)
-			serv.Start()
+			agentAddr := fmt.Sprintf("%s:%d", config.AgentHost, config.AgentPort)
+			agentConn, err := grpc.Dial(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock(), grpc.WithKeepaliveParams(
+				keepalive.ClientParameters{
+					Time:                30 * time.Second, // 每30秒发送一次keepalive探测
+					Timeout:             10 * time.Second, // 如果10秒内没有响应，则认为连接断开
+					PermitWithoutStream: true,             // 允许即使没有活动流的情况下也发送探测
+				}))
+			if err != nil {
+				panic(fmt.Errorf("agent server connect error : %v", err))
+			}
+			agentClient := pb.NewAgentClient(agentConn)
+			defer agentConn.Close()
+			serv := server.New(&config, &serviceConfig)
+			serv.Start(agentClient)
 			defer serv.Close()
 			runtime.GC()
 			{
