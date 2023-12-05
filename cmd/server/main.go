@@ -93,7 +93,7 @@ func main() {
 			&cli.DurationFlag{
 				Name:        "fetch_users_interval, fui",
 				Usage:       "API request cycle(fetch users), unit: second",
-				EnvVars:     []string{"X_PANDA_SS_FETCH_USER_INTERVAL", "FETCH_USER_INTERVAL"},
+				EnvVars:     []string{"X_PANDA_VMESS_FETCH_USER_INTERVAL", "FETCH_USER_INTERVAL"},
 				Value:       time.Second * 60,
 				DefaultText: "60",
 				Required:    false,
@@ -102,7 +102,7 @@ func main() {
 			&cli.DurationFlag{
 				Name:        "report_traffics_interval, fui",
 				Usage:       "API request cycle(report traffics), unit: second",
-				EnvVars:     []string{"X_PANDA_SS_FETCH_USER_INTERVAL", "REPORT_TRAFFICS_INTERVAL"},
+				EnvVars:     []string{"X_PANDA_VMESS_FETCH_USER_INTERVAL", "REPORT_TRAFFICS_INTERVAL"},
 				Value:       time.Second * 80,
 				DefaultText: "80",
 				Required:    false,
