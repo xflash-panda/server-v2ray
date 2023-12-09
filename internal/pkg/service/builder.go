@@ -245,13 +245,14 @@ func (b *Builder) reportTrafficsMonitor() (err error) {
 	log.Infof("%d user traffic needs to be reported", len(userTraffics))
 	trafficsRawData, err := api.MarshalTraffics(userTraffics)
 	if err != nil {
-		return
+		log.Errorln(err)
+		return nil
 	}
 
 	statsRawData, err := api.MarshalTrafficStats(&trafficStats)
 	if err != nil {
 		log.Errorln(err)
-		return
+		return nil
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultTimeout)
@@ -260,7 +261,7 @@ func (b *Builder) reportTrafficsMonitor() (err error) {
 	_, err = b.pbClient.Submit(ctx, &pb.SubmitRequest{Params: &pb.CommonParams{NodeId: int32(b.config.NodeID), NodeType: pb.NodeType_VMESS}, RawData: trafficsRawData, RawStats: statsRawData})
 	if err != nil {
 		log.Errorln(err)
-		return
+		return nil
 		//return err
 	}
 	return nil
@@ -272,11 +273,13 @@ func (b *Builder) fetchUsersMonitor() (err error) {
 	defer cancel()
 	r, err := b.pbClient.Users(ctx, &pb.UsersRequest{Params: &pb.CommonParams{NodeId: int32(b.config.NodeID), NodeType: pb.NodeType_VMESS}})
 	if err != nil {
-		return
+		log.Errorln(err)
+		return nil
 	}
 	newUserList, err := api.UnmarshalUsers(r.GetRawData())
 	if err != nil {
-		return
+		log.Errorln(err)
+		return nil
 	}
 
 	deleted, added := b.compareUserList(newUserList)
@@ -287,13 +290,15 @@ func (b *Builder) fetchUsersMonitor() (err error) {
 		}
 		err := b.removeUsers(deletedEmail, b.inboundTag)
 		if err != nil {
-			log.Print(err)
+			log.Errorln(err)
+			return nil
 		}
 	}
 	if len(added) > 0 {
 		err = b.addNewUser(added)
 		if err != nil {
 			log.Errorln(err)
+			return nil
 		}
 
 	}
@@ -310,7 +315,7 @@ func (b *Builder) heartbeatMonitor() error {
 	_, err := b.pbClient.Heartbeat(ctx, &pb.HeartbeatRequest{Params: &pb.CommonParams{NodeId: int32(b.config.NodeID), NodeType: pb.NodeType_VMESS}})
 	if err != nil {
 		log.Errorln(err)
-		//return err
+		return nil
 	}
 	return nil
 }
