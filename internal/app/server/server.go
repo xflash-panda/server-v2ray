@@ -103,6 +103,11 @@ func (s *Server) loadCore(pbInboundConfig *core.InboundHandlerConfig, pbOutbound
 	//Log Config
 	logConfig := &conf.LogConfig{}
 	logConfig.LogLevel = s.config.LogLevel
+	if s.config.LogLevel != LogLevelDebug {
+		logConfig.AccessLog = "none"
+		logConfig.ErrorLog = "none"
+		logConfig.DNSLog = false
+	}
 	pbLogConfig := logConfig.Build()
 
 	//InboundConfig

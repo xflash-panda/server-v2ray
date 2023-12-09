@@ -17,12 +17,9 @@ import (
 )
 
 const (
-	Name          = "vmess-node"
-	Version       = "0.1.17"
-	CopyRight     = "XFLASH-PANDA@2021"
-	LogLevelDebug = "debug"
-	LogLevelError = "error"
-	LogLevelInfo  = "info"
+	Name      = "vmess-node"
+	Version   = "0.1.18"
+	CopyRight = "XFLASH-PANDA@2021"
 )
 
 func init() {
@@ -110,7 +107,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:        "log_mode",
-				Value:       LogLevelError,
+				Value:       server.LogLevelError,
 				Usage:       "Log mode",
 				EnvVars:     []string{"X_PANDA_VMESS_LOG_LEVEL", "LOG_LEVEL"},
 				Destination: &config.LogLevel,
@@ -119,15 +116,15 @@ func main() {
 		},
 		Before: func(c *cli.Context) error {
 			log.SetFormatter(&log.TextFormatter{})
-			if config.LogLevel == LogLevelDebug {
+			if config.LogLevel == server.LogLevelDebug {
 				log.SetFormatter(&log.TextFormatter{
 					FullTimestamp: true,
 				})
 				log.SetLevel(log.DebugLevel)
 				log.SetReportCaller(true)
-			} else if config.LogLevel == LogLevelInfo {
+			} else if config.LogLevel == server.LogLevelInfo {
 				log.SetLevel(log.InfoLevel)
-			} else if config.LogLevel == LogLevelError {
+			} else if config.LogLevel == server.LogLevelError {
 				log.SetLevel(log.ErrorLevel)
 			} else {
 				return fmt.Errorf("log mode %s not supported", config.LogLevel)
@@ -135,7 +132,7 @@ func main() {
 			return nil
 		},
 		Action: func(c *cli.Context) error {
-			if config.LogLevel != LogLevelDebug {
+			if config.LogLevel != server.LogLevelDebug {
 				defer func() {
 					if r := recover(); r != nil {
 						log.Fatal(r)
