@@ -18,7 +18,7 @@ import (
 
 const (
 	Name      = "vmess-node"
-	Version   = "0.1.18"
+	Version   = "0.1.19"
 	CopyRight = "XFLASH-PANDA@2021"
 )
 
