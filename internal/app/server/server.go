@@ -24,7 +24,6 @@ type Config struct {
 
 type Server struct {
 	access        sync.Mutex
-	instance      *core.Instance
 	service       service.Service
 	config        *Config
 	apiConfig     *api.Config

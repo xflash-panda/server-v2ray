@@ -8,7 +8,7 @@ import (
 	"github.com/xflash-panda/server-vmess/internal/app/server"
 	"github.com/xflash-panda/server-vmess/internal/pkg/service"
 	"github.com/xtls/xray-core/core"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/signal"
 	"runtime"
@@ -18,7 +18,7 @@ import (
 
 const (
 	Name      = "vmess-node"
-	Version   = "0.1.19"
+	Version   = "0.1.20"
 	CopyRight = "XFLASH-PANDA@2021"
 )
 
@@ -28,7 +28,7 @@ func init() {
 		Aliases: []string{"V"},
 		Usage:   "print only the version",
 	}
-	cli.ErrWriter = ioutil.Discard
+	cli.ErrWriter = io.Discard
 
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Printf("version=%s xray.version=%s\n", Version, core.Version())
@@ -146,7 +146,7 @@ func main() {
 			runtime.GC()
 			{
 				osSignals := make(chan os.Signal, 1)
-				signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM)
+				signal.Notify(osSignals, os.Interrupt, syscall.SIGTERM)
 				<-osSignals
 			}
 			return nil

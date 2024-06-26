@@ -33,9 +33,7 @@ func InboundBuilder(config *Config, nodeInfo *api.VMessConfig) (*core.InboundHan
 		setting       json.RawMessage
 	)
 
-	var proxySetting interface{}
-	// Build Protocol and Protocol setting
-	proxySetting = &conf.VMessInboundConfig{}
+	var proxySetting interface{} = &conf.VMessInboundConfig{}
 
 	setting, err := json.Marshal(proxySetting)
 	if err != nil {
